@@ -1,0 +1,5 @@
+Package: dlopen2 0.8.2
+Declared license: MIT
+Upstream: https://github.com/OpenByteDev/dlopen2
+Authors as declared in upstream manifest: Szymon Wieloch <szymon.wieloch@gmail.com>, Ahmed Masud <ahmed.masud@saf.ai>, OpenByte <development.openbyte@gmail.com>
+Source archive: https://crates.io/crates/dlopen2/0.8.2

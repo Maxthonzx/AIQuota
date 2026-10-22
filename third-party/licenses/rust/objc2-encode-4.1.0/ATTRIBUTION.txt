@@ -1,0 +1,5 @@
+Package: objc2-encode 4.1.0
+Declared license: MIT
+Upstream: https://github.com/madsmtm/objc2
+Authors as declared in upstream manifest: Mads Marquart <mads@marquart.dk>
+Source archive: https://crates.io/crates/objc2-encode/4.1.0

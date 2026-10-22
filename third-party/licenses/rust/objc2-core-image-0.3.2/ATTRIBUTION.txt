@@ -1,0 +1,5 @@
+Package: objc2-core-image 0.3.2
+Declared license: Zlib OR Apache-2.0 OR MIT
+Upstream: https://github.com/madsmtm/objc2
+Authors as declared in upstream manifest: 
+Source archive: https://crates.io/crates/objc2-core-image/0.3.2

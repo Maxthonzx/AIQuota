@@ -1,0 +1,5 @@
+Package: dispatch2 0.3.1
+Declared license: Zlib OR Apache-2.0 OR MIT
+Upstream: https://github.com/madsmtm/objc2
+Authors as declared in upstream manifest: Mads Marquart <mads@marquart.dk>, Mary <mary@mary.zone>
+Source archive: https://crates.io/crates/dispatch2/0.3.1

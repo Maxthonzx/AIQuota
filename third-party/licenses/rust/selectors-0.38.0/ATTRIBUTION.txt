@@ -1,0 +1,5 @@
+Package: selectors 0.38.0
+Declared license: MPL-2.0
+Upstream: https://github.com/servo/stylo
+Authors as declared in upstream manifest: The Servo Project Developers
+Source archive: https://crates.io/crates/selectors/0.38.0

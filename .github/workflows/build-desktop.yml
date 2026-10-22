@@ -1,0 +1,238 @@
+name: Build and release desktop packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'docs/**'
+      - '*.md'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'index.html'
+      - 'tsconfig*.json'
+      - 'vite.config.ts'
+      - 'LICENSE'
+      - 'third-party/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  secret-scan:
+    name: Scan source history for secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify and run Gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=8.30.1
+          asset="gitleaks_${version}_linux_x64.tar.gz"
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${version}"
+          curl --fail --location --retry 2 "$base/$asset" -o "$RUNNER_TEMP/$asset"
+          curl --fail --location --retry 2 "$base/gitleaks_${version}_checksums.txt" -o "$RUNNER_TEMP/checksums.txt"
+          cd "$RUNNER_TEMP"
+          grep " $asset$" checksums.txt | sha256sum --check -
+          tar -xzf "$asset" gitleaks
+          cd "$GITHUB_WORKSPACE"
+          "$RUNNER_TEMP/gitleaks" git --redact=100 --log-opts=--all --no-banner
+
+  build:
+    name: Build ${{ matrix.platform }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macOS-AppleSilicon
+            runner: macos-15
+            target: aarch64-apple-darwin
+            architecture: arm64
+            slug: macos-apple-silicon
+            bundles: app,dmg
+          - platform: macOS-Intel
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+            architecture: x86_64
+            slug: macos-intel
+            bundles: app,dmg
+          - platform: Windows-11-x64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            architecture: x86_64
+            slug: windows-x64
+            bundles: nsis,msi
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          workspaces: src-tauri
+          key: ${{ matrix.platform }}
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify bilingual documentation and versions
+        run: python scripts/check_release.py
+      - name: Frontend regression tests
+        run: pnpm test
+      - name: Lint frontend
+        run: pnpm lint
+      - name: Prepare isolated macOS test keychain
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          password=$(uuidgen)
+          echo "::add-mask::$password"
+          security create-keychain -p "$password" aiquota-test.keychain-db
+          security default-keychain -s aiquota-test.keychain-db
+          security list-keychains -d user -s aiquota-test.keychain-db
+          security unlock-keychain -p "$password" aiquota-test.keychain-db
+          security set-keychain-settings -lut 3600 aiquota-test.keychain-db
+      - name: Run native regression tests
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml --lib
+      - name: Native credential store regression
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml --lib native_store_round_trip -- --ignored
+      - name: Build installers
+        run: pnpm exec tauri build --ci --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+      - name: Verify and archive macOS application
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          PACKAGE_TARGET: ${{ matrix.target }}
+          PACKAGE_ARCH: ${{ matrix.architecture }}
+          PACKAGE_SLUG: ${{ matrix.slug }}
+        run: |
+          set -euo pipefail
+          version=$(python3 -c "import json; print(json.load(open('src-tauri/tauri.conf.json'))['version'])")
+          app_path="src-tauri/target/$PACKAGE_TARGET/release/bundle/macos/AIQuota.app"
+          executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app_path/Contents/Info.plist")
+          architecture=$(lipo -archs "$app_path/Contents/MacOS/$executable")
+          echo "Packaged architecture: $architecture"
+          test "$architecture" = "$PACKAGE_ARCH"
+          mkdir -p release-packages
+          ditto -c -k --sequesterRsrc --keepParent "$app_path" "release-packages/AIQuota-v${version}-${PACKAGE_SLUG}.app.zip"
+          shopt -s nullglob
+          images=(src-tauri/target/"$PACKAGE_TARGET"/release/bundle/dmg/*.dmg)
+          test "${#images[@]}" -eq 1
+          cp "${images[0]}" "release-packages/AIQuota-v${version}-${PACKAGE_SLUG}.dmg"
+      - name: Verify and stage Windows installers
+        if: runner.os == 'Windows'
+        shell: python
+        env:
+          PACKAGE_TARGET: ${{ matrix.target }}
+        run: |
+          import json, os, shutil, struct
+          from pathlib import Path
+          version = json.loads(Path('src-tauri/tauri.conf.json').read_text(encoding='utf-8'))['version']
+          release = Path('src-tauri/target') / os.environ['PACKAGE_TARGET'] / 'release'
+          binary = (release / 'app.exe').read_bytes()
+          pe = struct.unpack_from('<I', binary, 0x3c)[0]
+          assert binary[pe:pe+4] == b'PE\0\0'
+          machine = struct.unpack_from('<H', binary, pe + 4)[0]
+          assert machine == 0x8664, f'Expected x64 PE, received {machine:#x}'
+          print('Packaged application architecture: Windows x64')
+          output = Path('release-packages')
+          output.mkdir(exist_ok=True)
+          for folder, extension, suffix in [('nsis', 'exe', '-setup.exe'), ('msi', 'msi', '.msi')]:
+              files = list((release / 'bundle' / folder).glob(f'*.{extension}'))
+              assert len(files) == 1, f'Expected one {extension} installer'
+              shutil.copy2(files[0], output / f'AIQuota-v{version}-windows-x64{suffix}')
+      - name: Upload platform packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: AIQuota-${{ matrix.slug }}
+          path: release-packages/*
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish tested desktop packages
+    needs: [build, secret-scan]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: AIQuota-*
+          path: packages
+          merge-multiple: true
+      - name: Prepare source, checksums, and bilingual notes
+        env:
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.sha }}
+        shell: python
+        run: |
+          import hashlib, json, os, posixpath, re, subprocess
+          from pathlib import Path
+          version = json.loads(Path('src-tauri/tauri.conf.json').read_text())['version']
+          tag = f'v{version}'
+          folder = Path('packages')
+          assert len(list(folder.iterdir())) == 6, 'Expected six platform files'
+          source = folder / f'AIQuota-v{version}-source.zip'
+          subprocess.run(['git', 'archive', '--format=zip', f'--output={source}', 'HEAD'], check=True)
+          files = sorted(p for p in folder.iterdir() if p.is_file())
+          assert len(files) == 7
+          (folder / 'SHA256SUMS.txt').write_text(''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in files), encoding='utf-8')
+          def absolute_links(text):
+              def replace(match):
+                  link = match.group(1)
+                  if re.match(r'[a-zA-Z][a-zA-Z0-9+.-]*:', link) or link.startswith('#'):
+                      return match.group(0)
+                  path = posixpath.normpath('docs/releases/' + link)
+                  return '](' + f'https://github.com/{os.environ["RELEASE_REPO"]}/blob/{tag}/{path}' + ')'
+              return re.sub(r'\]\(([^)]+)\)', replace, text)
+          notes = [absolute_links(Path(f'docs/releases/{tag}{suffix}').read_text(encoding='utf-8')) for suffix in ['.md', '.zh-CN.md']]
+          notes.append(f'Built from commit `{os.environ["RELEASE_SHA"]}` after all platform checks passed.\n')
+          Path('release-notes.md').write_text('\n\n---\n\n'.join(notes), encoding='utf-8')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
+              env.write(f'BUILD_TAG={tag}\n')
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${GH_REPO}/git/ref/tags/${BUILD_TAG}" > existing-tag.json 2>/dev/null; then
+            existing_sha=$(python3 -c "import json; print(json.load(open('existing-tag.json'))['object']['sha'])")
+            test "$existing_sha" = "$BUILD_SHA" || { echo 'Version belongs to another commit; bump the version.'; exit 1; }
+          fi
+          assets=(packages/*)
+          test "${#assets[@]}" -eq 8
+          if gh release view "$BUILD_TAG" >/dev/null 2>&1; then
+            gh release upload "$BUILD_TAG" --clobber "${assets[@]}"
+            gh release edit "$BUILD_TAG" --notes-file release-notes.md --draft=false --prerelease=false --latest
+          else
+            gh release create "$BUILD_TAG" --target "$BUILD_SHA" --title "AIQuota $BUILD_TAG" --notes-file release-notes.md --latest "${assets[@]}"
+          fi

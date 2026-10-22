@@ -1,0 +1,5 @@
+Package: jni-sys-macros 0.4.1
+Declared license: MIT OR Apache-2.0
+Upstream: https://github.com/jni-rs/jni-sys
+Authors as declared in upstream manifest: Robert Bragg <robert@sixbynine.org>
+Source archive: https://crates.io/crates/jni-sys-macros/0.4.1

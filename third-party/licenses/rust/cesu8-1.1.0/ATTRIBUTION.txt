@@ -1,0 +1,5 @@
+Package: cesu8 1.1.0
+Declared license: Apache-2.0/MIT
+Upstream: https://github.com/emk/cesu8-rs
+Authors as declared in upstream manifest: Eric Kidd <git@randomhacks.net>
+Source archive: https://crates.io/crates/cesu8/1.1.0

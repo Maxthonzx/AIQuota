@@ -1,0 +1,5 @@
+Package: libappindicator-sys 0.9.0
+Declared license: Apache-2.0 OR MIT
+Upstream: None
+Authors as declared in upstream manifest: 
+Source archive: https://crates.io/crates/libappindicator-sys/0.9.0

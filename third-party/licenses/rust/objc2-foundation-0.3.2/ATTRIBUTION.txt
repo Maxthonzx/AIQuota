@@ -1,0 +1,5 @@
+Package: objc2-foundation 0.3.2
+Declared license: MIT
+Upstream: https://github.com/madsmtm/objc2
+Authors as declared in upstream manifest: 
+Source archive: https://crates.io/crates/objc2-foundation/0.3.2

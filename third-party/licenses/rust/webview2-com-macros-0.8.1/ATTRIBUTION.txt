@@ -1,0 +1,5 @@
+Package: webview2-com-macros 0.8.1
+Declared license: MIT
+Upstream: https://github.com/wravery/webview2-rs
+Authors as declared in upstream manifest: 
+Source archive: https://crates.io/crates/webview2-com-macros/0.8.1

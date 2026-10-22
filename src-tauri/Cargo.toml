@@ -1,0 +1,34 @@
+[package]
+name = "app"
+version = "1.5.1"
+description = "Local AI subscription quota monitor"
+authors = ["Maxthonzx"]
+license = "MIT"
+repository = "https://github.com/Maxthonzx/AIQuota"
+edition = "2024"
+rust-version = "1.90"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.3", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.12.4", features = [] }
+tauri-plugin-log = "2"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+tokio = { version = "1", features = ["fs", "macros"] }
+dirs = "6"
+toml = "0.8"
+rusqlite = { version = "0.32", features = ["bundled"] }
+base64 = "0.22"
+tauri-plugin-notification = "2"
+
+keyring = { version = "3.6.3", features = ["apple-native", "windows-native"] }

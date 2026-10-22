@@ -1,0 +1,5 @@
+Package: defmt-parser 1.0.0
+Declared license: MIT OR Apache-2.0
+Upstream: https://github.com/knurling-rs/defmt
+Authors as declared in upstream manifest: The Knurling-rs developers
+Source archive: https://crates.io/crates/defmt-parser/1.0.0

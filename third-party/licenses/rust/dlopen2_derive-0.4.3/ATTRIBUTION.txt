@@ -1,0 +1,5 @@
+Package: dlopen2_derive 0.4.3
+Declared license: MIT
+Upstream: https://github.com/OpenByteDev/dlopen2
+Authors as declared in upstream manifest: Szymon Wieloch <szymon.wieloch@gmail.com>, OpenByte <development.openbyte@gmail.com>
+Source archive: https://crates.io/crates/dlopen2_derive/0.4.3

@@ -1,0 +1,5 @@
+Package: tauri-plugin 2.7.2
+Declared license: Apache-2.0 OR MIT
+Upstream: https://github.com/tauri-apps/tauri
+Authors as declared in upstream manifest: Tauri Programme within The Commons Conservancy
+Source archive: https://crates.io/crates/tauri-plugin/2.7.2

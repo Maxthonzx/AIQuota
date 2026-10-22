@@ -1,0 +1,5 @@
+Package: ndk-sys 0.6.0+11769913
+Declared license: MIT OR Apache-2.0
+Upstream: https://github.com/rust-mobile/ndk
+Authors as declared in upstream manifest: The Rust Windowing contributors
+Source archive: https://crates.io/crates/ndk-sys/0.6.0+11769913
