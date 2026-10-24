@@ -30,6 +30,8 @@ import {
 import ProviderEditor from "./ProviderEditor";
 import { Icon, Modal } from "./ui";
 import "./App.css";
+import "./compact.css";
+import { applySkin, readSkin, SKIN_KEY, type Skin } from "./skin";
 
 const REMIND_KEY = "aiquota_remind_enabled",
   EXHAUSTED_KEY = "aiquota_exhausted";
@@ -68,14 +70,14 @@ function countdown(value: QuotaWindow["resets_at"], now: number) {
     ? `${hours} 小时 ${mins % 60} 分后重置`
     : `${Math.floor(hours / 24)} 天 ${hours % 24} 小时后重置`;
 }
-function WindowRow({ window: w, now }: { window: QuotaWindow; now: number }) {
+function WindowRow({ window: w, now, skin }: { window: QuotaWindow; now: number; skin: Skin }) {
   const percent = w.used_percent,
     date = toResetDate(w.resets_at);
   return (
     <div className="quota-window">
       <div className="quota-heading">
         <span>{w.label}</span>
-        <strong>
+        <strong className={percent !== null && percent >= 85 ? "usage-critical" : percent !== null && percent >= 60 ? "usage-warning" : "usage-normal"}>
           {percent === null ? (
             "—"
           ) : (
@@ -114,7 +116,9 @@ function WindowRow({ window: w, now }: { window: QuotaWindow; now: number }) {
           <div>
             <span>{countdown(w.resets_at, now)}</span>
             <time dateTime={date.toISOString()} title="按电脑当前时区显示">
-              {formatResetTime(w.resets_at)}
+              {skin === "compact" ? (
+                <><span>{formatResetTime(w.resets_at)?.split(" ")[0]}</span><span>{formatResetTime(w.resets_at)?.split(" ")[1]}</span></>
+              ) : formatResetTime(w.resets_at)}
             </time>
           </div>
         </div>
@@ -261,6 +265,11 @@ export default function App() {
     }
   });
   const [theme, setTheme] = useState<ThemePreference>(readTheme);
+  const [skin, setSkin] = useState<Skin>(readSkin);
+  useEffect(() => {
+    applySkin(skin);
+    try { localStorage.setItem(SKIN_KEY, skin); } catch { /* session preference */ }
+  }, [skin]);
   const [intervalSec, setIntervalSec] = useState(() => {
     const v = Number(preference("aiquota_refresh_seconds", "120"));
     return [60, 120, 300, 600].includes(v) ? v : 120;
@@ -968,7 +977,7 @@ export default function App() {
                             {result?.status === "ok" && (
                               <>
                                 {result.windows.map((w, i) => (
-                                  <WindowRow window={w} now={now} key={i} />
+                                  <WindowRow window={w} now={now} skin={skin} key={i} />
                                 ))}
                                 {result.extras.length > 0 && (
                                   <dl
@@ -1126,6 +1135,17 @@ export default function App() {
         )}
         {page === "settings" && (
           <div className="settings-content">
+            <section className="settings-section">
+              <h2>界面皮肤</h2>
+              <p>经典布局或紧凑布局；切换不会改变供应商、凭据与额度数据。</p>
+              <div className="skin-options" role="group" aria-label="界面皮肤">
+                {([ ["classic", "经典", "原有布局"], ["compact", "紧凑", "一屏查看更多额度"] ] as const).map(([id, label, description]) => (
+                  <button key={id} className={skin === id ? "selected" : ""} aria-pressed={skin === id} onClick={() => setSkin(id)}>
+                    <strong>{label}</strong><small>{description}</small>
+                  </button>
+                ))}
+              </div>
+            </section>
             <section className="settings-section">
               <h2>外观</h2>
               <p>选择喜欢的外观，也可以让它自然跟随系统。</p>

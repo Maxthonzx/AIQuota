@@ -216,6 +216,7 @@ jobs:
           Path('release-notes.md').write_text('\n\n---\n\n'.join(notes), encoding='utf-8')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
               env.write(f'BUILD_TAG={tag}\n')
+              env.write(f'IS_PRERELEASE={str("-" in version).lower()}\n')
       - name: Publish release
         shell: bash
         env:
@@ -228,11 +229,18 @@ jobs:
             existing_sha=$(python3 -c "import json; print(json.load(open('existing-tag.json'))['object']['sha'])")
             test "$existing_sha" = "$BUILD_SHA" || { echo 'Version belongs to another commit; bump the version.'; exit 1; }
           fi
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            release_flags=(--prerelease --latest=false)
+            edit_flags=(--prerelease=true --latest=false)
+          else
+            release_flags=(--latest)
+            edit_flags=(--prerelease=false --latest)
+          fi
           assets=(packages/*)
           test "${#assets[@]}" -eq 8
           if gh release view "$BUILD_TAG" >/dev/null 2>&1; then
             gh release upload "$BUILD_TAG" --clobber "${assets[@]}"
-            gh release edit "$BUILD_TAG" --notes-file release-notes.md --draft=false --prerelease=false --latest
+            gh release edit "$BUILD_TAG" --notes-file release-notes.md --draft=false "${edit_flags[@]}"
           else
-            gh release create "$BUILD_TAG" --target "$BUILD_SHA" --title "AIQuota $BUILD_TAG" --notes-file release-notes.md --latest "${assets[@]}"
+            gh release create "$BUILD_TAG" --target "$BUILD_SHA" --title "AIQuota $BUILD_TAG" --notes-file release-notes.md "${release_flags[@]}" "${assets[@]}"
           fi
