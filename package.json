@@ -9,7 +9,7 @@
     "dev": "vite --port 1420 --strictPort",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types --test src/theme.test.mjs src/resetTime.test.mjs src/providers.test.mjs",
+    "test": "node --experimental-strip-types --test src/theme.test.mjs src/skin.test.mjs src/resetTime.test.mjs src/providers.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
