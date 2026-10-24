@@ -16,7 +16,7 @@ def check() -> None:
     cargo = tomllib.loads((ROOT / "src-tauri/Cargo.toml").read_text(encoding="utf-8"))
     lock = tomllib.loads((ROOT / "src-tauri/Cargo.lock").read_text(encoding="utf-8"))
     version = package["version"]
-    assert re.fullmatch(r"\d+\.\d+\.\d+", version), "Use a three-part release version"
+    assert re.fullmatch(r"\d+\.\d+\.\d+(?:-beta\.[1-9]\d*)?", version), "Use a three-part version with optional -beta.N"
     assert tauri["version"] == cargo["package"]["version"] == version, "Version metadata differs"
     app = [p for p in lock["package"] if p["name"] == cargo["package"]["name"] and "source" not in p]
     assert len(app) == 1 and app[0]["version"] == version, "Cargo.lock app version differs"
@@ -24,7 +24,7 @@ def check() -> None:
     assert tauri["bundle"]["macOS"]["minimumSystemVersion"] == "13.3", "Document macOS requirements consistently"
 
     files = subprocess.check_output(
-        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+        ["git", "ls-files", "--cached", "-z"],
         cwd=ROOT,
     ).decode("utf-8").split("\0")
     docs = sorted({ROOT / f for f in files if f.endswith(".md") and not f.startswith("third-party/") and (ROOT / f).is_file()})
@@ -47,7 +47,7 @@ def check() -> None:
             resolved = (path.parent / target).resolve()
             assert resolved.is_relative_to(ROOT), f"Documentation links outside repository: {link}"
             assert resolved.exists(), f"Broken link in {path.relative_to(ROOT)}: {link}"
-        if path.name.startswith("README"):
+        if path.name.startswith("README") and "-" not in version:
             assert f"releases/download/v{version}/" in content, "README download links use a different version"
     for suffix in [".md", ".zh-CN.md"]:
         assert (ROOT / "docs/releases" / f"v{version}{suffix}").is_file(), "Release notes missing"

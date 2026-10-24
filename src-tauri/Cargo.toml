@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.5.1"
+version = "1.6.0-beta.1"
 description = "Local AI subscription quota monitor"
 authors = ["Maxthonzx"]
 license = "MIT"
