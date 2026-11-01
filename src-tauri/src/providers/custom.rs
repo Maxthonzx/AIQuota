@@ -259,7 +259,8 @@ mod tests {
     fn parses_optional_plan_expiry_and_rejects_broken_mapping() {
         let mut config = config();
         config.expiry_path = "data.expire_at".into();
-        let json = serde_json::json!({"data":{"items":[{"used":"25"}],"total":100,"expire_at":"2026-05-12T14:30:00Z"}});
+        // config() 同时映射了 usage 额度与 reset_path，响应必须包含全部映射字段
+        let json = serde_json::json!({"data":{"items":[{"used":"25"}],"total":100,"reset":"2026-11-02T08:53:16Z","expire_at":"2026-05-12T14:30:00Z"}});
         let result = parse(&config, &json).unwrap();
         assert_eq!(
             result.plan_expires_at,
@@ -268,7 +269,7 @@ mod tests {
         // 映射了字段但响应里缺失时要报错，不能静默吞掉
         assert!(parse(&config, &serde_json::json!({"data":{}})).is_err());
         // null 视为接口未提供，而不是错误
-        let null_json = serde_json::json!({"data":{"expire_at":null}});
+        let null_json = serde_json::json!({"data":{"items":[{"used":"25"}],"total":100,"reset":"2026-11-02T08:53:16Z","expire_at":null}});
         assert_eq!(parse(&config, &null_json).unwrap().plan_expires_at, None);
     }
     #[test]
