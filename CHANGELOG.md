@@ -4,6 +4,14 @@
 
 Dates use the maintainer's time zone (Asia/Shanghai). The history below describes product releases; it is independent of the public repository's clean Git history.
 
+## [1.6.0] — 2026-11-01
+
+### Added
+
+- Optional compact desktop skin with denser quota cards and top navigation; the classic layout remains the default.
+- Plan expiry on quota cards: the expiry time to the minute in the local time zone with live remaining whole days, highlighted when expired.
+- Automatic expiry detection from GLM, Kimi, OpenCode, and Google quota responses, an optional expiry field mapping for custom providers, and a manual expiry field in every provider's settings.
+
 ## [1.5.1] — 2026-10-22
 
 ### Changed
