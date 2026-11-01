@@ -4,19 +4,20 @@
   <p>把 AI 订阅额度与 API 余额，放在同一个地方。</p>
   <p><a href="README.md">English</a> · <strong>简体中文</strong></p>
   <p><a href="https://github.com/Maxthonzx/AIQuota/releases/latest">下载</a> · <a href="docs/USER_GUIDE.zh-CN.md">使用指南</a> · <a href="CHANGELOG.zh-CN.md">更新日志</a> · <a href="https://github.com/Maxthonzx/AIQuota/issues">问题反馈</a></p>
+  <img src="docs/OVERVIEW_SCREENSHOT.png" width="860" alt="AIQuota 深色主题额度总览" />
 </div>
 
 AIQuota 是一个本机桌面应用，用来查看 AI 订阅额度、API 余额和重置时间。添加你在用的服务，移除不需要的服务，并按自己的习惯调整顺序。
 
 ## 下载
 
-在 [GitHub Releases](https://github.com/Maxthonzx/AIQuota/releases/latest) 下载 **v1.5.1**，根据电脑系统与处理器选择安装包：
+在 [GitHub Releases](https://github.com/Maxthonzx/AIQuota/releases/latest) 下载 **v1.6.0**，根据电脑系统与处理器选择安装包：
 
 | 平台 | 下载 | 系统要求 |
 | --- | --- | --- |
-| Apple Silicon Mac（M 系列芯片） | [DMG](https://github.com/Maxthonzx/AIQuota/releases/download/v1.5.1/AIQuota-v1.5.1-macos-apple-silicon.dmg) | macOS 13.3 及以上，ARM64 |
-| Intel 芯片 Mac | [DMG](https://github.com/Maxthonzx/AIQuota/releases/download/v1.5.1/AIQuota-v1.5.1-macos-intel.dmg) | macOS 13.3 及以上，x86_64 |
-| Windows 11 | [EXE 安装程序](https://github.com/Maxthonzx/AIQuota/releases/download/v1.5.1/AIQuota-v1.5.1-windows-x64-setup.exe) · [MSI](https://github.com/Maxthonzx/AIQuota/releases/download/v1.5.1/AIQuota-v1.5.1-windows-x64.msi) | Windows 11 x64，Microsoft WebView2 |
+| Apple Silicon Mac（M 系列芯片） | [DMG](https://github.com/Maxthonzx/AIQuota/releases/download/v1.6.0/AIQuota-v1.6.0-macos-apple-silicon.dmg) | macOS 13.3 及以上，ARM64 |
+| Intel 芯片 Mac | [DMG](https://github.com/Maxthonzx/AIQuota/releases/download/v1.6.0/AIQuota-v1.6.0-macos-intel.dmg) | macOS 13.3 及以上，x86_64 |
+| Windows 11 | [EXE 安装程序](https://github.com/Maxthonzx/AIQuota/releases/download/v1.6.0/AIQuota-v1.6.0-windows-x64-setup.exe) · [MSI](https://github.com/Maxthonzx/AIQuota/releases/download/v1.6.0/AIQuota-v1.6.0-windows-x64.msi) | Windows 11 x64，Microsoft WebView2 |
 
 发布页还提供 Mac `.app.zip`、源码和 `SHA256SUMS.txt` 校验文件。暂不提供 Windows ARM64 或 Linux 包。当前安装包未签名，macOS 包未公证；文件校验和系统提示处理见[常见问题](docs/TROUBLESHOOTING.zh-CN.md)。
 
@@ -26,7 +27,8 @@ AIQuota 是一个本机桌面应用，用来查看 AI 订阅额度、API 余额�
 - **添加自定义供应商。** 配置 GET/JSON 额度接口、认证和字段映射，显示余额、已用百分比或已用量/总额度。
 - **按自己的习惯整理。** 添加、移除、搜索和筛选供应商；拖动或使用上下箭头排序，重启后保留。
 - **看清额度何时恢复。** 按电脑当前时区显示完整重置时间与倒计时，额度从耗尽恢复可用时可发送系统通知。
-- **选择喜欢的外观。** 默认跟随系统，也可手动选择浅色或深色。
+- **套餐到期一目了然。** 卡片可显示精确到分钟的套餐到期时间和实时剩余天数——供应商接口返回时自动识别，也可从账单页手动填写。
+- **选择喜欢的外观。** 默认跟随系统，也可手动选择浅色或深色，并能在经典与紧凑皮肤间切换。
 - **自己掌控凭据。** 手动输入的 Key 保存在 Windows 凭据管理器或 macOS 钥匙串；已有 CLI/IDE 登录文件只读访问。
 
 应用界面目前为简体中文，项目文档提供英文与简体中文版本。

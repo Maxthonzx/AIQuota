@@ -4,19 +4,20 @@
   <p>Your AI subscriptions and API balances, in one place.</p>
   <p><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
   <p><a href="https://github.com/Maxthonzx/AIQuota/releases/latest">Download</a> · <a href="docs/USER_GUIDE.md">User guide</a> · <a href="CHANGELOG.md">Changelog</a> · <a href="https://github.com/Maxthonzx/AIQuota/issues">Issues</a></p>
+  <img src="docs/OVERVIEW_SCREENSHOT.png" width="860" alt="AIQuota overview dashboard in dark theme" />
 </div>
 
 AIQuota is a local desktop app for tracking AI subscription quotas, API balances, and reset times. Connect the services you use, remove the ones you do not, and arrange your workspace your way.
 
 ## Download
 
-Get **v1.5.1** from [GitHub Releases](https://github.com/Maxthonzx/AIQuota/releases/latest). Choose the package that matches your computer:
+Get **v1.6.0** from [GitHub Releases](https://github.com/Maxthonzx/AIQuota/releases/latest). Choose the package that matches your computer:
 
 | Platform | Download | Requirements |
 | --- | --- | --- |
-| Mac with Apple Silicon (M series) | [DMG](https://github.com/Maxthonzx/AIQuota/releases/download/v1.5.1/AIQuota-v1.5.1-macos-apple-silicon.dmg) | macOS 13.3+, ARM64 |
-| Mac with Intel processor | [DMG](https://github.com/Maxthonzx/AIQuota/releases/download/v1.5.1/AIQuota-v1.5.1-macos-intel.dmg) | macOS 13.3+, x86_64 |
-| Windows 11 | [Setup EXE](https://github.com/Maxthonzx/AIQuota/releases/download/v1.5.1/AIQuota-v1.5.1-windows-x64-setup.exe) · [MSI](https://github.com/Maxthonzx/AIQuota/releases/download/v1.5.1/AIQuota-v1.5.1-windows-x64.msi) | Windows 11 x64, Microsoft WebView2 |
+| Mac with Apple Silicon (M series) | [DMG](https://github.com/Maxthonzx/AIQuota/releases/download/v1.6.0/AIQuota-v1.6.0-macos-apple-silicon.dmg) | macOS 13.3+, ARM64 |
+| Mac with Intel processor | [DMG](https://github.com/Maxthonzx/AIQuota/releases/download/v1.6.0/AIQuota-v1.6.0-macos-intel.dmg) | macOS 13.3+, x86_64 |
+| Windows 11 | [Setup EXE](https://github.com/Maxthonzx/AIQuota/releases/download/v1.6.0/AIQuota-v1.6.0-windows-x64-setup.exe) · [MSI](https://github.com/Maxthonzx/AIQuota/releases/download/v1.6.0/AIQuota-v1.6.0-windows-x64.msi) | Windows 11 x64, Microsoft WebView2 |
 
 Mac `.app.zip` archives, source code, and `SHA256SUMS.txt` are also available on the release page. Windows ARM64 and Linux packages are not provided. Installers are currently unsigned; macOS builds are not notarized. See [installation and troubleshooting](docs/TROUBLESHOOTING.md) for verification and system prompts.
 
@@ -26,7 +27,8 @@ Mac `.app.zip` archives, source code, and `SHA256SUMS.txt` are also available on
 - **Connect custom providers.** Configure a GET/JSON quota endpoint, authentication, and field mappings to display a balance, used percentage, or used/total quota.
 - **Keep the dashboard yours.** Add or remove providers, search and filter the list, and reorder services by dragging or using the up/down buttons. Your order survives restarts.
 - **Know when quota returns.** View reset times in your computer's time zone, alongside a countdown. Receive a system notification when an exhausted quota becomes available again.
-- **Choose your appearance.** Follow the system theme by default, or choose light or dark mode.
+- **See plan expiry at a glance.** Cards can show the plan expiry time to the minute with live remaining days — detected from provider APIs where available, or entered manually from the billing page.
+- **Choose your appearance.** Follow the system theme by default, choose light or dark mode, and switch between the classic and compact skins.
 - **Keep credentials under your control.** Manually entered keys use Windows Credential Manager or macOS Keychain. Existing CLI/IDE sign-ins are read without modifying their files.
 
 The application interface is currently in Simplified Chinese. Documentation is available in English and Simplified Chinese.
