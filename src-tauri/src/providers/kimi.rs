@@ -34,6 +34,11 @@ async fn fetch_one(client: &reqwest::Client, key: &str, account: Option<&str>) -
     };
 
     let usages = json.get("usages").cloned().unwrap_or(json.clone());
+
+    // 套餐到期时间：接口若返回则自动展示（找不到对应字段就不显示）
+    let plan_expiry = super::find_expiry_field(&usages, super::PLAN_EXPIRY_KEYS)
+        .or_else(|| super::find_expiry_field(&json, super::PLAN_EXPIRY_KEYS));
+
     let mut windows = vec![];
     for (field, label) in [("limit_5h", "5小时窗口"), ("limit_7d", "7天窗口")] {
         if let Some(w) = usages.get(field) {
@@ -81,7 +86,7 @@ async fn fetch_one(client: &reqwest::Client, key: &str, account: Option<&str>) -
     let mut result = if windows.is_empty() && extras.is_empty() {
         ProviderResult::error(ID, "响应中没有已知的额度字段")
     } else {
-        ProviderResult::ok(ID, windows, extras)
+        ProviderResult::ok(ID, windows, extras).with_plan_expiry(plan_expiry)
     };
     if let Some(label) = account {
         result = result.with_account(label);

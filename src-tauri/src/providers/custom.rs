@@ -13,6 +13,9 @@ pub struct CustomConfig {
     pub value_path: String,
     pub total_path: String,
     pub reset_path: String,
+    /// 可选：接口响应里套餐到期时间字段路径，缺省不展示到期信息
+    #[serde(default)]
+    pub expiry_path: String,
     pub unit: String,
 }
 
@@ -63,7 +66,12 @@ fn validate(config: &CustomConfig) -> Result<reqwest::Url, &'static str> {
     if !matches!(config.metric.as_str(), "balance" | "percent" | "usage") {
         return Err("额度显示方式无效");
     }
-    for path in [&config.value_path, &config.total_path, &config.reset_path] {
+    for path in [
+        &config.value_path,
+        &config.total_path,
+        &config.reset_path,
+        &config.expiry_path,
+    ] {
         if path.len() > 200
             || (!path.is_empty()
                 && path.split('.').any(|s| {
@@ -113,6 +121,16 @@ fn parse(config: &CustomConfig, json: &Value) -> Result<ProviderResult, String> 
             return Err("重置时间必须是 ISO 时间或时间戳".into());
         }
         Some(v.clone())
+    };
+    let expiry = if config.expiry_path.is_empty() {
+        None
+    } else {
+        let v =
+            field(json, &config.expiry_path).ok_or("未找到套餐到期时间字段，请检查字段映射")?;
+        if !v.is_null() && !v.is_string() && !v.is_number() {
+            return Err("套餐到期时间必须是 ISO 时间或时间戳".into());
+        }
+        Some(v.clone()).filter(|v| !v.is_null())
     };
     let mut extras = vec![];
     let percent = match config.metric.as_str() {
@@ -168,7 +186,7 @@ fn parse(config: &CustomConfig, json: &Value) -> Result<ProviderResult, String> 
     } else {
         vec![]
     };
-    Ok(ProviderResult::ok(&config.id, windows, extras))
+    Ok(ProviderResult::ok(&config.id, windows, extras).with_plan_expiry(expiry))
 }
 
 async fn query(config: &CustomConfig, key: Option<String>) -> Result<ProviderResult, String> {
@@ -236,6 +254,22 @@ mod tests {
     use super::*;
     fn config() -> CustomConfig {
         serde_json::from_value(serde_json::json!({"id":"custom-test","endpoint":"https://example.com/quota","auth":"none","header":"x-api-key","metric":"usage","value_path":"data.items.0.used","total_path":"data.total","reset_path":"data.reset","unit":"tokens"})).unwrap()
+    }
+    #[test]
+    fn parses_optional_plan_expiry_and_rejects_broken_mapping() {
+        let mut config = config();
+        config.expiry_path = "data.expire_at".into();
+        let json = serde_json::json!({"data":{"items":[{"used":"25"}],"total":100,"expire_at":"2026-05-12T14:30:00Z"}});
+        let result = parse(&config, &json).unwrap();
+        assert_eq!(
+            result.plan_expires_at,
+            Some(json["data"]["expire_at"].clone())
+        );
+        // 映射了字段但响应里缺失时要报错，不能静默吞掉
+        assert!(parse(&config, &serde_json::json!({"data":{}})).is_err());
+        // null 视为接口未提供，而不是错误
+        let null_json = serde_json::json!({"data":{"expire_at":null}});
+        assert_eq!(parse(&config, &null_json).unwrap().plan_expires_at, None);
     }
     #[test]
     fn maps_nested_arrays_numeric_strings_and_resets_without_silent_zeroes() {

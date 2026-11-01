@@ -93,6 +93,10 @@ pub async fn fetch(client: &reqwest::Client) -> Vec<ProviderResult> {
         return vec![ProviderResult::error(ID, "响应中没有 data 字段")];
     };
 
+    // 套餐到期时间：接口若返回则自动展示（找不到对应字段就不显示）
+    let plan_expiry = super::find_expiry_field(data, super::PLAN_EXPIRY_KEYS)
+        .or_else(|| super::find_expiry_field(&json, super::PLAN_EXPIRY_KEYS));
+
     let mut extras = vec![];
     if let Some(level) = data.get("level").and_then(|l| l.as_str()) {
         extras.push(("套餐等级".into(), level.to_string()));
@@ -127,5 +131,5 @@ pub async fn fetch(client: &reqwest::Client) -> Vec<ProviderResult> {
         return vec![ProviderResult::error(ID, "响应中没有套餐额度窗口（key 可能不是套餐 Key）")];
     }
 
-    vec![ProviderResult::ok(ID, windows, extras)]
+    vec![ProviderResult::ok(ID, windows, extras).with_plan_expiry(plan_expiry)]
 }

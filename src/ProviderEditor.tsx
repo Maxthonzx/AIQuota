@@ -111,6 +111,7 @@ export default function ProviderEditor({
         custom.value_path,
         custom.total_path,
         custom.reset_path,
+        custom.expiry_path ?? "",
       ]) {
         if (path && !/^[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)*$/.test(path)) {
           setError(
@@ -454,6 +455,18 @@ export default function ProviderEditor({
                   支持 ISO 时间、秒或毫秒时间戳，按电脑当前时区显示。
                 </small>
               </label>
+              <label className="field">
+                套餐到期字段（可选）
+                <input
+                  value={custom.expiry_path ?? ""}
+                  placeholder="data.expire_at"
+                  onChange={(e) => updateCustom("expiry_path", e.target.value)}
+                  maxLength={200}
+                />
+                <small>
+                  接口返回的套餐到期时间，支持 ISO 时间或时间戳；也可以直接在下方手动填写。
+                </small>
+              </label>
               <details>
                 <summary>字段路径示例</summary>
                 <pre>{'{ "data": { "balance": 12.50 } }'}</pre>
@@ -515,6 +528,22 @@ export default function ProviderEditor({
               </button>
             </details>
           )}
+          <label className="field">
+            套餐到期时间（可选）
+            <input
+              type="datetime-local"
+              value={draft.plan_expiry ?? ""}
+              onChange={(e) =>
+                setDraft((d) => ({
+                  ...d,
+                  plan_expiry: e.target.value || undefined,
+                }))
+              }
+            />
+            <small>
+              从套餐页或账单页抄录，精确到分钟；卡片会显示到期时间和剩余天数。
+            </small>
+          </label>
           {error && (
             <div className="form-error" role="alert">
               <Icon name="alert" />

@@ -49,6 +49,10 @@
 :root[data-skin="compact"] .card-footer { padding:6px 12px; font-size:10px; }
 :root[data-skin="compact"] .connection-empty { padding:12px 4px; min-height:120px; }
 :root[data-skin="compact"] .quota-extras { margin-top:8px; padding-top:8px; }
+:root[data-skin="compact"] .plan-line { margin-top:8px; padding-top:8px; align-items:center; }
+:root[data-skin="compact"] .plan-line > div { gap:6px; }
+:root[data-skin="compact"] .plan-line > div > span { font-size:11px; white-space:nowrap; }
+:root[data-skin="compact"] .plan-line time { flex-shrink:0; font-size:10px; }
 :root[data-skin="compact"] .toast { left:50%; }
 :root[data-skin="compact"][data-theme="dark"] .button.primary { color:#103527; }
 @media(min-width:1600px) { :root[data-skin="compact"] .quota-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }

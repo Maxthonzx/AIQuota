@@ -169,7 +169,13 @@ pub async fn fetch(_client: &reqwest::Client) -> Vec<ProviderResult> {
         extras.push(("套餐".into(), plan.to_string()));
     }
 
-    vec![ProviderResult::ok(ID, windows, extras)]
+    // 套餐到期时间：planStatus 或 userStatus 里若返回则自动展示
+    let plan_expiry = user_status
+        .get("planStatus")
+        .and_then(|p| super::find_expiry_field(p, super::PLAN_EXPIRY_KEYS))
+        .or_else(|| super::find_expiry_field(&user_status, super::PLAN_EXPIRY_KEYS));
+
+    vec![ProviderResult::ok(ID, windows, extras).with_plan_expiry(plan_expiry)]
 }
 
 #[cfg(all(test, target_os = "windows"))]

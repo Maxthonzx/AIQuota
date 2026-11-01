@@ -75,5 +75,7 @@ pub async fn fetch(client: &reqwest::Client) -> Vec<ProviderResult> {
         return vec![ProviderResult::error(ID, "响应中没有已知的额度窗口")];
     }
 
-    vec![ProviderResult::ok(ID, windows, vec![])]
+    // 套餐到期时间：接口若在顶层返回则自动展示（窗口内的 resetsAt 是额度重置，不算到期）
+    let plan_expiry = super::find_expiry_field(&json, super::PLAN_EXPIRY_KEYS);
+    vec![ProviderResult::ok(ID, windows, vec![]).with_plan_expiry(plan_expiry)]
 }

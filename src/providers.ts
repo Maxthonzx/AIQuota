@@ -11,6 +11,8 @@ export interface ProviderResult {
   error: string | null;
   windows: QuotaWindow[];
   extras: [string, string][];
+  /** 接口自动识别的套餐到期时间（ISO 时间或时间戳）；手动填写的 plan_expiry 优先 */
+  plan_expires_at: string | number | null;
   action: { label: string; kind: string; target: string } | null;
 }
 export interface CustomConfig {
@@ -22,6 +24,8 @@ export interface CustomConfig {
   value_path: string;
   total_path: string;
   reset_path: string;
+  /** 可选：接口响应里套餐到期时间的字段路径 */
+  expiry_path?: string;
   unit: string;
 }
 export interface Connection {
@@ -29,6 +33,8 @@ export interface Connection {
   provider: string;
   name: string;
   type: "subscription" | "api";
+  /** 手动填写的套餐到期时间（datetime-local 本地时间），优先于接口自动识别 */
+  plan_expiry?: string;
   custom?: CustomConfig;
 }
 export interface ProviderMeta {
@@ -170,6 +176,7 @@ export function makeCustom(): Connection {
       value_path: "data.balance",
       total_path: "",
       reset_path: "",
+      expiry_path: "",
       unit: "USD",
     },
   };
@@ -182,6 +189,7 @@ export function serializeConnections(connections: Connection[]): string {
       provider: c.provider,
       name: c.name,
       type: c.type,
+      ...(c.plan_expiry ? { plan_expiry: c.plan_expiry } : {}),
       ...(c.custom
         ? {
             custom: {
@@ -193,6 +201,7 @@ export function serializeConnections(connections: Connection[]): string {
               value_path: c.custom.value_path,
               total_path: c.custom.total_path,
               reset_path: c.custom.reset_path,
+              expiry_path: c.custom.expiry_path ?? "",
               unit: c.custom.unit,
             },
           }
@@ -218,6 +227,9 @@ export function readConnections(
       ids.has(c.id)
     )
       throw Error("供应商配置格式无效");
+    // 到期时间是后加的可选字段，旧配置里不存在也算有效
+    if (c.plan_expiry !== undefined && typeof c.plan_expiry !== "string")
+      throw Error("供应商配置格式无效");
     if (c.provider === "custom") {
       if (
         !/^custom-[a-zA-Z0-9-]{1,73}$/.test(c.id) ||
@@ -232,7 +244,9 @@ export function readConnections(
           "total_path",
           "reset_path",
           "unit",
-        ].some((k) => typeof c.custom[k] !== "string")
+        ].some((k) => typeof c.custom[k] !== "string") ||
+        (c.custom.expiry_path !== undefined &&
+          typeof c.custom.expiry_path !== "string")
       )
         throw Error("自定义供应商配置格式无效");
     } else if (!PROVIDERS.some((p) => p.id === c.id && p.id === c.provider))

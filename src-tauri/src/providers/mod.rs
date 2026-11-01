@@ -51,8 +51,39 @@ pub struct ProviderResult {
     pub windows: Vec<QuotaWindow>,
     /// extra key-value rows, e.g. balances
     pub extras: Vec<(String, String)>,
+    /// 套餐到期时间（ISO 8601 字符串或秒/毫秒时间戳），接口自动识别；前端显示时手动填写优先
+    pub plan_expires_at: Option<serde_json::Value>,
     /// 凭证问题时的快捷操作（打开终端/应用/网页）
     pub action: Option<ActionHint>,
+}
+
+/// 各供应商接口响应里可能出现的套餐到期字段名（camelCase 与 snake_case 都列）。
+pub const PLAN_EXPIRY_KEYS: &[&str] = &[
+    "expireTime",
+    "expire_time",
+    "planExpireTime",
+    "plan_expire_time",
+    "expiryTime",
+    "expiry_time",
+    "planEndTime",
+    "plan_end_time",
+    "expireAt",
+    "expire_at",
+    "validUntil",
+    "valid_until",
+    "subscriptionEndTime",
+    "membershipEndTime",
+];
+
+/// 在响应对象的第一层按候选字段名查找套餐到期时间（字符串或数字才有效）。
+pub fn find_expiry_field(value: &serde_json::Value, keys: &[&str]) -> Option<serde_json::Value> {
+    let obj = value.as_object()?;
+    for (key, v) in obj {
+        if keys.contains(&key.as_str()) && (v.is_string() || v.is_number()) {
+            return Some(v.clone());
+        }
+    }
+    None
 }
 
 impl ProviderResult {
@@ -64,6 +95,7 @@ impl ProviderResult {
             error: None,
             windows,
             extras,
+            plan_expires_at: None,
             action: None,
         }
     }
@@ -76,6 +108,7 @@ impl ProviderResult {
             error: None,
             windows: vec![],
             extras: vec![],
+            plan_expires_at: None,
             action: None,
         }
     }
@@ -88,8 +121,14 @@ impl ProviderResult {
             error: Some(msg.into()),
             windows: vec![],
             extras: vec![],
+            plan_expires_at: None,
             action: None,
         }
+    }
+
+    pub fn with_plan_expiry(mut self, value: Option<serde_json::Value>) -> Self {
+        self.plan_expires_at = value;
+        self
     }
 
     pub fn with_account(mut self, label: &str) -> Self {
@@ -110,5 +149,28 @@ pub fn http_error(status: reqwest::StatusCode) -> String {
         403 => "权限不足或账号无此服务许可 (403)".into(),
         429 => "额度已耗尽或被限流 (429)".into(),
         s => format!("请求失败 (HTTP {s})"),
+    }
+}
+
+#[cfg(test)]
+mod expiry_tests {
+    use super::*;
+
+    #[test]
+    fn finds_first_candidate_string_or_number_and_ignores_others() {
+        let json = serde_json::json!({"plan_expire_time":"2026-05-12T14:30:00Z"});
+        assert_eq!(
+            find_expiry_field(&json, PLAN_EXPIRY_KEYS),
+            Some(serde_json::json!("2026-05-12T14:30:00Z"))
+        );
+        // 候选列表里排在前面的字段不存在时，也能命中后面的
+        assert_eq!(
+            find_expiry_field(&json, &["expireTime", "plan_expire_time"]),
+            Some(serde_json::json!("2026-05-12T14:30:00Z"))
+        );
+        // null、布尔、嵌套对象与未知字段都无效
+        let noisy = serde_json::json!({"expireTime":null,"valid_until":true,"deep":{"expireTime":"x"}});
+        assert_eq!(find_expiry_field(&noisy, PLAN_EXPIRY_KEYS), None);
+        assert_eq!(find_expiry_field(&serde_json::json!([]), PLAN_EXPIRY_KEYS), None);
     }
 }

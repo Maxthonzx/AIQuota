@@ -12,7 +12,12 @@ import {
   THEME_KEY,
   type ThemePreference,
 } from "./theme";
-import { toResetDate, formatResetTime } from "./resetTime";
+import {
+  toResetDate,
+  formatResetTime,
+  formatPlanExpiry,
+  planRemaining,
+} from "./resetTime";
 import {
   CONNECTIONS_KEY,
   PROVIDERS,
@@ -467,6 +472,7 @@ export default function App() {
                 error: "查询失败，请稍后刷新或检查连接配置。",
                 windows: [],
                 extras: [],
+                plan_expires_at: null,
                 action: null,
               },
             ],
@@ -920,6 +926,10 @@ export default function App() {
                     const cardId = `${connection.id}:${result?.account ?? ""}`,
                       isCollapsed =
                         collapsed.includes(cardId) && result?.status !== "ok";
+                    // 套餐到期：手动填写优先，其次是接口响应里自动识别的
+                    const planValue =
+                      connection.plan_expiry || result?.plan_expires_at || null;
+                    const remaining = planRemaining(planValue, now);
                     return (
                       <article
                         className={`quota-card${isCollapsed ? " is-collapsed" : ""}`}
@@ -1017,6 +1027,32 @@ export default function App() {
                                   配置连接
                                   <Icon name="arrow" />
                                 </button>
+                              </div>
+                            )}
+                            {planValue && remaining && (
+                              <div
+                                className={`plan-line${remaining.expired ? " expired" : ""}`}
+                              >
+                                <Icon name="clock" />
+                                <div>
+                                  <span>
+                                    套餐到期{" "}
+                                    <time
+                                      dateTime={
+                                        toResetDate(planValue)?.toISOString()
+                                      }
+                                    >
+                                      {formatPlanExpiry(planValue)}
+                                    </time>
+                                  </span>
+                                  <strong>
+                                    {remaining.expired
+                                      ? "已到期"
+                                      : remaining.days === 0
+                                        ? "剩余不足 1 天"
+                                        : `剩余 ${remaining.days} 天`}
+                                  </strong>
+                                </div>
                               </div>
                             )}
                           </div>
