@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "AIQuota",
-  "version": "1.6.0-beta.1",
+  "version": "1.6.0-beta.2",
   "identifier": "dev.aiquota.app",
   "build": {
     "frontendDist": "../dist",
@@ -33,7 +33,7 @@
     },
     "windows": {
       "minimumWebview2Version": "111.0.0.0",
-      "wix": { "version": "1.6.0.1" },
+      "wix": { "version": "1.6.0.2" },
       "webviewInstallMode": { "type": "downloadBootstrapper", "silent": true }
     },
     "targets": "all",
